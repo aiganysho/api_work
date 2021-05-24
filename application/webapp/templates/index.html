@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+ <div class="container">
+     <input id="A" placeholder="Enter number A">
+     <input id="B" placeholder="Enter number B">
+    <button onclick="button(event)" id="{% url 'api:add' %}" class="button">add</button>
+     <button onclick="button(event)" id="{% url 'api:subtract' %}" class="button">subtract</button>
+     <button onclick="button(event)" id="{% url 'api:multiply' %}" class="button">multiply</button>
+     <button onclick="button(event)" id="{% url 'api:divide' %}" class="button">divide</button>
+     <p id="result"></p>
+ </div>
+
+<script>
+    function getCookie(name) {
+    var cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        var cookies = document.cookie.split(';');
+        for (var i = 0; i < cookies.length; i++) {
+            var cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+
+    return cookieValue;
+}
+    async function makeRequest(url, method='GET', body) {
+        let headers={
+            'X-CSRFToken': getCookie('csrftoken')
+        }
+    let response = await fetch(url, {method, headers:headers, body:body});
+    if (response.ok) {  // нормальный ответ
+        return await response.json();
+    } else {            // ошибка
+        let error = new Error(response.statusText);
+        error.response = response;
+        throw error;
+    }
+}
+
+    async function button(event) {
+        event.preventDefault()
+        let url = event.target.id
+        let a = Number(document.getElementById('A').value)
+        let b = Number(document.getElementById('B').value)
+        let data = {"A": a, "B": b}
+        try{
+            let result = await makeRequest(url, "POST", JSON.stringify(data))
+            let p = document.getElementById('result')
+            p.innerText = result.answer
+
+
+        }
+        catch(e){
+            console.log(e);
+        }
+    }
+
+    window.addEventListener('load', async function (){
+        await makeRequest('/api/get_token/')
+    })
+</script>
+</body>
+</html>
